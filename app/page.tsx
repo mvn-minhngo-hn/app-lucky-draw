@@ -56,7 +56,9 @@ export default function Home() {
           <p className="text-white text-xs opacity-75 mt-1">
             {activeTab === "shake"
               ? "Using DeviceMotionEvent API"
-              : "Using Web Audio API"}
+              : activeTab === "blow"
+              ? "Using Web Audio API"
+              : "Using TensorFlow.js"}
           </p>
         </div>
       </div>
