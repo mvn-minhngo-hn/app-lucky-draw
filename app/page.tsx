@@ -3,8 +3,9 @@
 import { useState } from "react";
 import ShakeDetection from "./components/ShakeDetection";
 import BlowDetection from "./components/BlowDetection";
+import AudioTranslate from "./components/AudioTranslate";
 
-type TabType = "shake" | "blow";
+type TabType = "shake" | "blow" | "translate";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>("shake");
@@ -43,12 +44,23 @@ export default function Home() {
             >
               🌬️ Blow
             </button>
+            <button
+              onClick={() => setActiveTab("translate")}
+              className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
+                activeTab === "translate"
+                  ? "bg-white text-green-600 shadow-md"
+                  : "text-gray-600 hover:text-gray-800"
+              }`}
+            >
+              🎤 Translate
+            </button>
           </div>
           {/* Shake Tab Content */}
           {activeTab === "shake" && <ShakeDetection />}
 
           {/* Blow Tab Content */}
           {activeTab === "blow" && <BlowDetection />}
+          {activeTab === "translate" && <AudioTranslate />}
         </div>
 
         {/* Footer */}
@@ -58,7 +70,9 @@ export default function Home() {
               ? "Using DeviceMotionEvent API"
               : activeTab === "blow"
               ? "Using Web Audio API"
-              : "Using TensorFlow.js"}
+              : activeTab === "translate"
+              ? "Using Web Audio + Speech Recognition"
+              : ""}
           </p>
         </div>
       </div>
