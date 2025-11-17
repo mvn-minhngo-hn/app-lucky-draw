@@ -34,7 +34,7 @@ export default function BlowDetection() {
   const blowStartTimeRef = useRef<number | null>(null);
   const isBlowingRef = useRef(false);
 
-  const BALLOON_INCREMENT = 0.2; // mỗi 1s thổi tăng 20%
+  const BALLOON_INCREMENT = 0.05; // mỗi 1s thổi tăng 5%
 
   const cleanup = () => {
     if (rafIdRef.current !== null) {
