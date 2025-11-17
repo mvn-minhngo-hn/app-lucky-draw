@@ -157,7 +157,7 @@ export default function BlowDetection() {
       const loop = () => {
         if (!analyserRef.current || !dataArrayRef.current) return;
 
-        analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+        analyserRef.current.getByteFrequencyData(dataArrayRef.current as any);
         const energy = computeBandEnergy(dataArrayRef.current);
         const now = performance.now();
         const elapsed = now - calibrationStartRef.current;
