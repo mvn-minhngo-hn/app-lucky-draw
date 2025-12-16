@@ -125,7 +125,7 @@ export default function AudioTranslate() {
       setIsRecognizing(true);
       setErrorMessage("");
     } catch (e) {
-      setErrorMessage("Không thể bắt đầu nhận dạng giọng nói.");
+      setErrorMessage("Không thể bắt đầu nhận dạng giọng nói." + e?.message);
     }
   };
 
