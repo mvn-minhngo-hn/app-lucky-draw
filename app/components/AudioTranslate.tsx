@@ -166,7 +166,7 @@ export default function AudioTranslate() {
     const dataArray = dataArrayRef.current;
     if (!analyser || !dataArray) return;
 
-    analyser.getByteTimeDomainData(dataArray);
+    analyser.getByteTimeDomainData(dataArray as Uint8Array<ArrayBuffer>);
 
     let sumSquares = 0;
     for (let i = 0; i < dataArray.length; i++) {
@@ -304,7 +304,8 @@ export default function AudioTranslate() {
       </div>
 
       <div className="text-xs text-gray-500 text-center">
-        Độ tin cậy: {confidence === null ? "-" : `${Math.round(confidence * 100)}%`}
+        Độ tin cậy:{" "}
+        {confidence === null ? "-" : `${Math.round(confidence * 100)}%`}
       </div>
 
       {errorMessage && (
