@@ -8,7 +8,9 @@ export default function AudioTranslate() {
   const [volume, setVolume] = useState(0);
   const [threshold, setThreshold] = useState(0.12);
   const [transcript, setTranscript] = useState("");
+  const [confidence, setConfidence] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [logs, setLogs] = useState<string[]>([]);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -67,6 +69,13 @@ export default function AudioTranslate() {
     wasAboveThresholdRef.current = false;
   };
 
+  const addLog = (message: string) => {
+    setLogs((prev: string[]) => {
+      const next = [...prev, message];
+      return next.length > 200 ? next.slice(next.length - 200) : next;
+    });
+  };
+
   const ensureRecognition = () => {
     if (recognitionRef.current) return true;
 
@@ -88,20 +97,35 @@ export default function AudioTranslate() {
     recognition.maxAlternatives = 1;
 
     recognition.onresult = (event: any) => {
-      let finalText = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      let nextTranscript = "";
+      let nextConfidence: number | null = null;
+
+      for (
+        let i = event.resultIndex, len = event.results.length;
+        i < len;
+        i++
+      ) {
         const res = event.results[i];
-        if (res.isFinal) {
-          finalText += res[0].transcript;
+        const alt = res?.[0];
+        const text = alt?.transcript ?? "";
+
+        if (res?.isFinal) {
+          nextTranscript += text;
+          if (typeof alt?.confidence === "number") {
+            nextConfidence = alt.confidence;
+          }
+        } else {
+          nextTranscript += text;
         }
       }
-      if (finalText) {
-        setTranscript((prev) => (prev ? prev + " " + finalText : finalText));
-      }
+
+      setTranscript(nextTranscript);
+      setConfidence(nextConfidence);
     };
 
     recognition.onerror = (event: any) => {
-      setErrorMessage("Lỗi nhận dạng giọng nói: " + event.error);
+      const msg = event?.message || event?.error || "unknown";
+      setErrorMessage("Lỗi nhận dạng giọng nói: " + msg);
       setIsRecognizing(false);
     };
 
@@ -120,18 +144,21 @@ export default function AudioTranslate() {
     const ok = ensureRecognition();
     if (!ok || !recognitionRef.current) return;
 
+    recognitionRef.current.lang = "vi-VN";
+    recognitionRef.current.continuous = false;
+    recognitionRef.current.interimResults = true;
+
     try {
       recognitionRef.current.start();
       setIsRecognizing(true);
       setErrorMessage("");
-    } catch (e) {
-  let msg = "Không thể bắt đầu nhận dạng giọng nói.";
-
-  if (e instanceof Error) {
-    msg += ` (${e.message})`;
-  }
-
-  setErrorMessage(msg);    }
+      addLog("SpeechRecognition started");
+    } catch (e: any) {
+      const msg = e?.message || e?.error || "unknown";
+      setErrorMessage("Không thể bắt đầu nhận dạng giọng nói: " + msg);
+      addLog("SpeechRecognition start error: " + msg);
+      setIsRecognizing(false);
+    }
   };
 
   const loopAudio = () => {
@@ -139,9 +166,7 @@ export default function AudioTranslate() {
     const dataArray = dataArrayRef.current;
     if (!analyser || !dataArray) return;
 
-    analyser.getByteTimeDomainData(
-      dataArray as unknown as Uint8Array<ArrayBuffer>
-    );
+    analyser.getByteTimeDomainData(dataArray);
 
     let sumSquares = 0;
     for (let i = 0; i < dataArray.length; i++) {
@@ -183,14 +208,18 @@ export default function AudioTranslate() {
 
       setIsActive(true);
       wasAboveThresholdRef.current = false;
+      addLog("Microphone started");
       loopAudio();
     } catch (error: any) {
-      setErrorMessage("Không thể truy cập micro: " + error.message);
+      const msg = error?.message ?? String(error);
+      setErrorMessage("Không thể truy cập micro: " + msg);
+      addLog("Microphone error: " + msg);
       stopAll();
     }
   };
 
   const stop = () => {
+    addLog("Stopped");
     stopAll();
   };
 
@@ -272,6 +301,10 @@ export default function AudioTranslate() {
         <div className="min-h-[80px] max-h-40 overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800 whitespace-pre-wrap">
           {transcript || "Chưa có nội dung."}
         </div>
+      </div>
+
+      <div className="text-xs text-gray-500 text-center">
+        Độ tin cậy: {confidence === null ? "-" : `${Math.round(confidence * 100)}%`}
       </div>
 
       {errorMessage && (
